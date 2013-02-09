@@ -28,6 +28,7 @@
     <Folder Include="App_Resources\Android\drawable-ldpi">
       <Platform>Android</Platform>
     </Folder>
+    <Folder Include="scripts\security" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="App_Resources\iOS\icon.png" />
@@ -40,7 +41,7 @@
     <Resource Include="App_Resources\iOS\Icon-Small-50@2x.png" />
     <Resource Include="App_Resources\iOS\Default.png" />
     <Resource Include="App_Resources\iOS\Default@2x.png" />
-  <Resource Include="App_Resources\iOS\Default-568h@2x.png" />
+    <Resource Include="App_Resources\iOS\Default-568h@2x.png" />
     <Resource Include="App_Resources\iOS\Default-Portrait.png" />
     <Resource Include="App_Resources\iOS\Default-Landscape.png" />
     <Resource Include="App_Resources\iOS\Default-Portrait@2x.png" />
@@ -59,7 +60,15 @@
     <Content Include="kendo\styles\images\KendoUI.ttf" />
     <Content Include="kendo\styles\images\KendoUI.woff" />
     <Content Include="kendo\styles\kendo.mobile.all.min.css" />
-    <Content Include="scripts\hello-world.js" />
+    <Content Include="scripts\cookie.js" />
+    <Content Include="scripts\CryptoChatApp.js" />
+    <Content Include="scripts\DataProvider.js" />
+    <Content Include="scripts\security\gibberish-aes.min.js" />
+    <Content Include="scripts\MessagesHeartbeat.js" />
+    <Content Include="scripts\Mock.js" />
+    <Content Include="scripts\security\Sha1.js" />
+    <Content Include="scripts\ServiceClient.js" />
+    <Content Include="scripts\Validator.js" />
     <Content Include="styles\main.css" />
     <Content Include="cordova.ios.js">
       <Platform>iOS</Platform>

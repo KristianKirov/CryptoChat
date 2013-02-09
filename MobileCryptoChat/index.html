@@ -6,13 +6,21 @@
         <script src="cordova.js"></script>
         <script src="kendo/js/jquery.min.js"></script>
         <script src="kendo/js/kendo.mobile.min.js"></script>
-        <script src="scripts/hello-world.js"></script>
+        <script src="scripts/CryptoChatApp.js"></script>
+        <script src="scripts/Mock.js"></script>
+        <script src="scripts/ServiceClient.js"></script>
+        <script src="scripts/Validator.js"></script>
+        <script src="scripts/security/Sha1.js"></script>
+        <script src="scripts/cookie.js"></script>
+        <script src="scripts/DataProvider.js"></script>
+        <script src="scripts/MessagesHeartbeat.js"></script>
+        <script src="scripts/security/gibberish-aes.min.js"></script>
 
         <link href="kendo/styles/kendo.mobile.all.min.css" rel="stylesheet" />
         <link href="styles/main.css" rel="stylesheet" />
     </head>
     <body>
-        <div data-role="view" id="tabstrip-login" data-init="loginScreenInit">
+        <div data-role="view" id="loginView" data-init="cryptoChatApp.onLoginScreenInitialized" data-before-show="cryptoChatApp.onLoginScreenBeforeShow">
             <div data-role="header">
                 <div data-role="navbar">
                     <span>Login</span>
@@ -22,16 +30,16 @@
             
             <ul data-role="listview" data-style="inset">
                 <li>
-                    <div>Password</div><input type="password" placeholder="type here ..."/>
+                    <div>Password</div><input id="loginPasswordTb" type="password" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"/>
                 </li>
                 <li>
-                    Remember me <input id="rememberMeSwitch" />
+                    Remember me <input id="loginRememberMeSwitch" />
                 </li>
             </ul>
-            <a type="button" data-role="button">Login</a>
+            <a type="button" data-role="button" data-click="cryptoChatApp.onLoginButtonClicked">Login</a>
         </div>
         
-        <div data-role="view" id="registerView" data-title="Register" data-init="registerScreenInit">
+        <div data-role="view" id="registerView" data-title="Register" data-init="cryptoChatApp.onRegisterScreenInitialized" data-before-show="cryptoChatApp.onRegisterScreenBeforeShow">
             <div data-role="header">
                 <div data-role="navbar">
                     <a data-align="left" data-role="backbutton">Back</a>
@@ -40,54 +48,77 @@
             </div>
             <ul data-role="listview" data-style="inset">
                 <li>
-                    <div>Password</div><input type="password" placeholder="type here ..."/>
+                    <div>Password</div><input id="registerPasswordTb" type="password" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"/>
                 </li>
                 <li>
-                    Remember me <input id="rememberMeSwitch2" />
+                    Remember me <input id="registerRememberMeSwitch" />
                 </li>
             </ul>
-            <a type="button" data-role="button" data-click="registerButtonClicked">Register</a>
+            <a type="button" data-role="button" data-click="cryptoChatApp.onRegisterButtonClicked">Register</a>
         </div>
+        
+        <div data-role="view" id="peopleView" data-title="People">
+            <ul id="activePeopleListView" data-type="group"></ul>
+            
+            <script type="text/x-kendo-template" id="activePeopleTemplate">
+                <a>#=text#</a>
+            </script>
+        </div>
+        
+        <div data-role="view" id="openedSessionsView" data-title="Chat Sessions">
+            <h1>TODO: Opened ss</h1>
+        </div>
+        
+        <div data-role="view" id="pendingSessionsView" data-title="Pending Sessions" data-init="cryptoChatApp.onPendingSessionsScreenInitialized">
+            <ul id="pendingSessionsListView" data-type="group"></ul>
+            
+            <script type="text/x-kendo-template" id="pendingSessionsTemplate">
+                #=text#
+                <a data-role="detailbutton" data-style="rowinsert"></a>
+                <a data-role="detailbutton" data-style="rowdelete"></a>
+            </script>
+        </div>
+        
+        <div data-role="modalview" id="challengeModalView" style="width: 95%; height: auto;">
+            <div data-role="header">
+                <div data-role="navbar">
+                    <span>Send Challenge</span>
+                    <a data-click="cryptoChatApp.closeChallengeModalView" data-role="button" data-align="right">X</a>
+                </div>
+            </div>
+            
+            <h2 id="challengeNameHeader"></h2>
+            <input type="hidden" id="challengeNumberTb" />
+            <ul data-role="listview" data-style="inset">
+                <li>
+                    <label for="secretKeyTb">Secret Key:</label>
+                    <input type="password" id="secretKeyTb" />
+                </li>
+            </ul>
+            <a data-click="cryptoChatApp.onSendChallengeClicked" type="button" style="width:90%;" data-role="button">Send</a>
+        </div>
+
         
         <div data-role="layout" data-id="mobile-tabstrip">
             <header data-role="header">
                 <div data-role="navbar">
                     <span data-role="view-title"></span>
+                    <a data-role="button" data-click="cryptoChatApp.onLogoutButtonClicked" data-align="right">Logout</a>
                 </div>
             </header>
 
             <footer data-role="footer" style="display:none;">
                 <div data-role="tabstrip" id="mainTabstrip">
-                    <a href="#tabstrip-login" data-icon="home">Home</a>
+                    <a href="#peopleView" data-icon="home">People</a>
+                    <a href="#openedSessionsView" data-icon="home">People</a>
+                    <a href="#pendingSessionsView" data-icon="home">People</a>
                 </div>
             </footer>
         </div>
 
         <script>
-            var app = new kendo.mobile.Application(document.body, { transition: "slide", layout: "mobile-tabstrip" });
-            
-            function loginScreenInit()
-            {
-                 $("#rememberMeSwitch").kendoMobileSwitch({
-                    checked: true,
-                    onLabel: "YES",
-                    offLabel: "NO"
-                });   
-            }
-            
-            function registerScreenInit()
-            {
-                 $("#rememberMeSwitch2").kendoMobileSwitch({
-                    checked: true,
-                    onLabel: "YES",
-                    offLabel: "NO"
-                });   
-            }
-            
-            function registerButtonClicked()
-            {
-                app.pane.showLoading();    
-            }
+            var mock = new Mock();
+            var cryptoChatApp = new CryptoChatApp("mobile-tabstrip");
         </script>
     </body>
 </html>
