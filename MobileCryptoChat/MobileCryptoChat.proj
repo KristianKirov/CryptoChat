@@ -28,6 +28,7 @@
     <Folder Include="App_Resources\Android\drawable-ldpi">
       <Platform>Android</Platform>
     </Folder>
+    <Folder Include="scripts\models" />
     <Folder Include="scripts\security" />
   </ItemGroup>
   <ItemGroup>
@@ -63,6 +64,7 @@
     <Content Include="scripts\cookie.js" />
     <Content Include="scripts\CryptoChatApp.js" />
     <Content Include="scripts\DataProvider.js" />
+    <Content Include="scripts\models\chatModels.js" />
     <Content Include="scripts\security\gibberish-aes.min.js" />
     <Content Include="scripts\MessagesHeartbeat.js" />
     <Content Include="scripts\Mock.js" />
@@ -78,6 +80,8 @@
       <Platform>Android</Platform>
       <TargetName>cordova.js</TargetName>
     </Content>
+    <Content Include="styles\speech_bubble_left_2.png" />
+    <Content Include="styles\speech_bubble_right_2.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Telerik\ICE\Tools\Mobile\MobileTools.targets" />
 </Project>

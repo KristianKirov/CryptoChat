@@ -34,3 +34,14 @@ Validator.prototype.validateResponseData = function(initialData, respondData)
     
     return false;
 };
+
+Validator.prototype.validateRecievedChallengeData = function(challengeKey)
+{
+    var respondNumber = parseInt(challengeKey);
+    if (respondNumber && respondNumber <= 999999999)
+    {
+        return true;
+    }
+    
+    return false;
+};

@@ -74,8 +74,8 @@
             
             <script type="text/x-kendo-template" id="pendingSessionsTemplate">
                 #=text#
-                <a data-role="detailbutton" data-style="rowinsert"></a>
-                <a data-role="detailbutton" data-style="rowdelete"></a>
+                <a data-role="detailbutton" data-style="rowinsert" data-click="cryptoChatApp.onAcceptPeningSessionClicked" style="margin-right:30px;"></a>
+                <a data-role="detailbutton" data-style="rowdelete" data-click="cryptoChatApp.onDeclinePeningSessionClicked"></a>
             </script>
         </div>
         
@@ -98,6 +98,24 @@
             <a data-click="cryptoChatApp.onSendChallengeClicked" type="button" style="width:90%;" data-role="button">Send</a>
         </div>
 
+        <div data-role="modalview" id="responseModalView" style="width: 95%; height: auto;">
+            <div data-role="header">
+                <div data-role="navbar">
+                    <span>Send Response</span>
+                    <a data-click="cryptoChatApp.closeResponseModalView" data-role="button" data-align="right">X</a>
+                </div>
+            </div>
+            
+            <h2 id="responseNameHeader"></h2>
+            <input type="hidden" id="responseNumberTb" />
+            <ul data-role="listview" data-style="inset">
+                <li>
+                    <label for="secretKeyTb">Secret Key:</label>
+                    <input type="password" id="secretKeyTb" />
+                </li>
+            </ul>
+            <a data-click="cryptoChatApp.onSendResponseClicked" type="button" style="width:90%;" data-role="button">Send</a>
+        </div>
         
         <div data-role="layout" data-id="mobile-tabstrip">
             <header data-role="header">
@@ -110,8 +128,8 @@
             <footer data-role="footer" style="display:none;">
                 <div data-role="tabstrip" id="mainTabstrip">
                     <a href="#peopleView" data-icon="home">People</a>
-                    <a href="#openedSessionsView" data-icon="home">People</a>
-                    <a href="#pendingSessionsView" data-icon="home">People</a>
+                    <a href="#pendingSessionsView" data-icon="home">Pending sessions</a>
+                    <a href="#openedSessionsView" data-icon="home">Active sessions</a>
                 </div>
             </footer>
         </div>

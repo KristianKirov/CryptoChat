@@ -15,7 +15,7 @@ function CryptoChatApp(layout)
     this.heartbeat = null;
     this.loggedInUsers = null;
     this.invitedUsers = new Object();
-    this.pendingChatSessions = kendo.data.DataSource.create({ data: [] });
+    this.pendingChatSessions = kendo.data.DataSource.create({ data: [], group: "group" });
     
     this._onGeneralServiceError = function()
     {
@@ -350,12 +350,21 @@ function CryptoChatApp(layout)
         {
             self.removeOnlineUser(message.msisdn);
             delete self.invitedUsers[message.msisdn];
-            removePendingChatSession(message.msisdn);
+            self.removePendingChatSession(message.msisdn);
         }
         else if (message.msgType == "MSG_CHALLENGE")
         {
             debugger;
-            removePendingChatSession(message.msisdn);
+            self.removePendingChatSession(message.msisdn);
+            
+            var dataProvider = new DataProvider();
+            dataProvider.joinNumbersWithPhoneBook([message.msisdn],
+                function(people)
+                {
+                    var person = people[0];
+                    person.challengeData = message.msgText;
+                    self.pendingChatSessions.add(person);
+                }, device.msisdn);
         }
         else if (message.msgType == "MSG_RESPONSE")
         {
@@ -368,17 +377,24 @@ function CryptoChatApp(layout)
                 {
                     alert("start chat!");
                 }
+                else
+                {
+                    delete self.invitedUsers[message.msisdn];
+                    
+                    var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
+                    client.cancelChat(self.sessionId, dataItem.number, null, null);
+                }
             }
         }
         else if (message.msgType == "MSG_START_CHAT")
         {
             delete self.invitedUsers[message.msisdn];
-            removePendingChatSession(message.msisdn);
+            self.removePendingChatSession(message.msisdn);
         }
         else if (message.msgType == "MSG_CANCEL_CHAT")
         {
             delete self.invitedUsers[message.msisdn];
-            removePendingChatSession(message.msisdn);
+            self.removePendingChatSession(message.msisdn);
         }
         else if (message.msgType == "MSG_CANCEL_CHAT")
         {
@@ -442,6 +458,8 @@ function CryptoChatApp(layout)
             var challengeData = dataProvider.getChallengeData();
             var challenegeKey = dataProvider.getChallengeKey(challengeData, enteredKey);
             
+            self.closeChallengeModalView();
+            
             var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
             client.inviteUser(self.sessionId, challengeNumber, challenegeKey,
                 function(data)
@@ -489,6 +507,96 @@ function CryptoChatApp(layout)
             style: "inset",
             type: "group"
         });
+    };
+    
+    this.onAcceptPeningSessionClicked = function()
+    {
+        debugger;
+        var itemUid = this.element.parent().data("uid");
+        var dataItem = self.pendingChatSessions.getByUid(itemUid);
+        self.showResponseWindow(dataItem.text, dataItem.number, dataItem.challengeData);
+    };
+    
+    this.onDeclinePeningSessionClicked = function()
+    {
+        var itemUid = this.element.parent().data("uid");
+        var dataItem = self.pendingChatSessions.getByUid(itemUid);
+        self.pendingChatSessions.remove(dataItem);
+        
+        var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
+        client.cancelChat(self.sessionId, dataItem.number, null, null);
+    };
+    
+    this.showResponseWindow = function(displayName, number, challengeData)
+    {
+        $("#responseNameHeader").html(displayName);
+        $("#responseNumberTb").val(number);
+        $("#challengeDataTb").val(challengeData);
+        $("#secretKeyTb").val("");
+        $("#responseModalView").data("kendoMobileModalView").open();
+    };
+    
+    this.closeResponseModalView = function()
+    {
+        $("#responseModalView").data("kendoMobileModalView").close();
+    };
+    
+    this.onSendResponseClicked = function()
+    {
+        var enteredKey = $("#secretKeyTb").val();
+        var validator = new Validator();
+        if (validator.validateSecretKey(enteredKey))
+        {
+            debugger;
+            var responseNumber = $("#responseNumberTb").val();
+            
+            var challengeData = $("#challengeDataTb").val();
+            var challenegeKey = dataProvider.getRespondData(challengeData, enteredKey);
+            if (validator.validateRecievedChallengeData(challenegeKey))
+            {
+                var dataProvider = new DataProvider();
+                var respondingData = dataProvider.getRespondingData(challenegeKey, enteredKey);
+                self.closeResponseModalView();
+                
+                var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
+                client.responseChatInvitation(self.sessionId, responseNumber, respondingData,
+                    function(data)
+                    {
+                        navigator.notification.alert("Your response was successfully sent. Chat session will start as soon as the other users verify its correctness.", null, "Response Sent");
+                    },
+                    function(response)
+                    {
+                        var data = JSON.parse(response.responseText);
+                        if (data.errorCode == "ERR_SESSIONID")
+                        {
+                            //TODO: reconnect
+                        }
+                        else if(data.errorCode == "ERR_BAD_USER" || data.errorCode == "ERR_USER_OFF")
+                        {
+                            self.removeOnlineUser(responseNumber);
+                            self.removePendingChatSession(responseNumber);
+                            navigator.notification.alert("Selected user is offline or does not exists.", null, "Response Error");
+                        }
+                        else if(data.errorCode == "ERR_INVALID_STATE")
+                        {
+                            navigator.notification.alert("This session no longer exists.", null, "Resposnse Error");
+                        }
+                        else
+                        {
+                            self._onGeneralServiceError();
+                        }
+                    }
+                );
+            }
+            else
+            {
+                navigator.notification.alert("Entered key is invalid", null, "Invalid Key");
+            }
+        }
+        else
+        {
+            navigator.notification.alert("Entered key is invalid", null, "Invalid Key");
+        }
     };
     // -- End Pending Chat Sessions --
 }

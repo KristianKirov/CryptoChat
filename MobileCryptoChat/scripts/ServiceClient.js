@@ -55,3 +55,19 @@ CryptoChatServiceClient.prototype.inviteUser = function(sessionId, recipientMSIS
         { sessionID: sessionId, recipientMSISDN: recipientMSISDN, challenge: challenge},
         inviteUserSucceededCallback, inviteUserFailedCallback);
 };
+
+CryptoChatServiceClient.prototype.responseChatInvitation = function(sessionId, recipientMSISDN, response,
+    responseChatInvitationSucceededCallback, responseChatInvitationFailedCallback)
+{
+    this._performRequest("response-chat-invitation", "POST",
+        { sessionID: sessionId, recipientMSISDN: recipientMSISDN, response: response},
+        responseChatInvitationSucceededCallback, responseChatInvitationFailedCallback);
+};
+
+CryptoChatServiceClient.prototype.cancelChat = function(sessionId, recipientMSISDN,
+    cancelChatSucceededCallback, cancelChatInvitationFailedCallback)
+{
+    this._performRequest("response-chat-invitation", "POST",
+        { sessionID: sessionId, recipientMSISDN: recipientMSISDN},
+        cancelChatSucceededCallback, cancelChatInvitationFailedCallback);
+};
