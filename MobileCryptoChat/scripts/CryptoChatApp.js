@@ -16,6 +16,7 @@ function CryptoChatApp(layout)
     this.loggedInUsers = null;
     this.invitedUsers = new Object();
     this.pendingChatSessions = kendo.data.DataSource.create({ data: [], group: "group" });
+    this.sessions = getObservableSessions(this.onMessageSendClicked, this.leaveChatSession);
     
     this._onGeneralServiceError = function()
     {
@@ -269,7 +270,7 @@ function CryptoChatApp(layout)
             function(people)
             {
                 self.loggedInUsers = kendo.data.DataSource.create({data: people, group: "group" });
-                
+              
                 $("#activePeopleListView").kendoMobileListView({
                     dataSource: self.loggedInUsers,
                     template: $("#activePeopleTemplate").html(),
@@ -278,7 +279,7 @@ function CryptoChatApp(layout)
                     click: self.onUserClicked
                 });
                 self.kendoApp.pane.hideLoading();
-                
+              
                 self.heartbeat = new MessagesHeartbeat(self.sessionId, self.onMessageRecieved);
                 self.heartbeat.start();
             }, device.msisdn
@@ -351,6 +352,12 @@ function CryptoChatApp(layout)
             self.removeOnlineUser(message.msisdn);
             delete self.invitedUsers[message.msisdn];
             self.removePendingChatSession(message.msisdn);
+            
+            var session = self.sessions.getSession(message.msisdn);
+            if (session)
+            {
+                self.removeChatSession(session);
+            }
         }
         else if (message.msgType == "MSG_CHALLENGE")
         {
@@ -375,15 +382,15 @@ function CryptoChatApp(layout)
                 var validator = new Validator();
                 if (validator.validateResponseData(initialData, message.msgText))
                 {
-                    alert("start chat!");
+                    self.startChat(message.msisdn, initationData.secretKey);
                 }
                 else
                 {
-                    delete self.invitedUsers[message.msisdn];
-                    
                     var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
                     client.cancelChat(self.sessionId, dataItem.number, null, null);
                 }
+                
+                delete self.invitedUsers[message.msisdn];
             }
         }
         else if (message.msgType == "MSG_START_CHAT")
@@ -395,11 +402,122 @@ function CryptoChatApp(layout)
         {
             delete self.invitedUsers[message.msisdn];
             self.removePendingChatSession(message.msisdn);
-        }
-        else if (message.msgType == "MSG_CANCEL_CHAT")
-        {
             
+            var session = self.sessions.getSession(message.msisdn);
+            if (session)
+            {
+                self.removeChatSession(session);
+            }
         }
+        else if (message.msgType == "MSG_CHAT_MESSAGE")
+        {
+            var session = self.sessions.getSession(message.msisdn);
+            if (session)
+            {
+                var dataProvider = new DataProvider();
+                var text = dataProvider.getMessageFromData(message.msgText, session.secretKey);
+                session.addMessage(text, false);
+                if (self.isSessionPresented(session))
+                {
+                    session.scrollToBottom();
+                }
+            }
+        }
+    };
+    
+    this.startChat = function(recipientNumber, secretKey)
+    {
+        var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
+        client.startChat(self.sessionId, recipientNumber,
+            function(data)
+            {
+                var dataProvider = new DataProvider();
+                dataProvider.joinNumbersWithPhoneBook([recipientNumber],
+                    function(people)
+                    {
+                        var person = people[0];
+                        self.sessions.addSession(person.text, person.number, secretKey);
+                    }, device.msisdn
+                );
+            }
+            ,
+            function(response)
+            {
+                var data = JSON.parse(response.responseText);
+                if (data.errorCode == "ERR_SESSIONID")
+                {
+                    //TODO: reconnect
+                }
+                else if(data.errorCode == "ERR_BAD_USER" || data.errorCode == "ERR_USER_OFF")
+                {
+                    self.removeOnlineUser(recipientNumber);
+                }
+            }
+        );
+    };
+    
+    this.onMessageSendClicked = function(session, message)
+    {
+        var dataProvider = new DataProvider();
+        var messageData = dataProvider.getDataFromMessage(message.text, session.secretKey);
+        
+        var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
+        client.sendChatMessage(self.sessionId, session.number, messageData, null,
+            function(response)
+            {
+                var data = JSON.parse(response.responseText);
+                if (data.errorCode == "ERR_SESSIONID")
+                {
+                    //TODO: reconnect
+                }
+                else if(data.errorCode == "ERR_BAD_USER" || data.errorCode == "ERR_USER_OFF")
+                {
+                    self.removeOnlineUser(recipientNumber);
+                    self.removeChatSession(session);
+                }
+                else if (data.errorCode == "ERR_INVALID_STATE")
+                {
+                    self.removeChatSession(session);
+                }
+                else if (data.errorCode == "ERR_GENERAL" || data.errorCode == "ERR_BAD_MSG")
+                {
+                    session.removeMessage(message);
+                    if (self.isSessionPresented(session))
+                    {
+                        session.scrollToBottom();
+                        navigator.notification.alert("An error has occurred while sending your message.", null, "Message Error");
+                    }
+                }
+            }
+        );
+    };
+    
+    this.isSessionPresented = function(session)
+    {
+        return self.sessions.selectedSession.model == session && self.kendoApp.view().id == "chatRoom";
+    };
+    
+    this.removeChatSession = function(session)
+    {
+        self.sessions.removeSessionObject(session) ;
+        if (self.isSessionPresented(session))
+        {
+            self.kendoApp.navigate("#:back");
+            navigator.notification.alert("This session is no longer valid.", null, "Session Closed");
+        }
+    };
+    
+    this.leaveChatSession = function(session)
+    {
+        if (self.isSessionPresented(session))
+        {
+            self.kendoApp.navigate("#:back");
+        }
+        
+        var client = new CryptoChatServiceClient(SERVICE_BASE_URL);
+        client.cancelChat(self.sessionId, dataItem.number, null, null);
+        
+        self.sessions.removeSessionObject(session);
     };
     
     this.removeOnlineUser = function(number)
@@ -428,7 +546,15 @@ function CryptoChatApp(layout)
     {
         if (e.dataItem)
         {
-            self.showChallengeWindow(e.dataItem.text, e.dataItem.number);
+            var openedSession = self.sessions.getSession(e.dataItem.number);
+            if (openedSession)
+            {
+                self.sessions.showSession(openedSession);
+            }
+            else
+            {
+                self.showChallengeWindow(e.dataItem.text, e.dataItem.number);
+            }
         }
     };
     
@@ -599,4 +725,9 @@ function CryptoChatApp(layout)
         }
     };
     // -- End Pending Chat Sessions --
+    
+    this.onChatRoomHide = function(e)
+    {
+        e.view.model.model.unbind()
+    };
 }

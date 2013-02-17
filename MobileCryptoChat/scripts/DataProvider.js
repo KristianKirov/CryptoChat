@@ -74,7 +74,6 @@ DataProvider.prototype.getChallengeData = function()
 DataProvider.prototype.getChallengeKey = function(data, secretKey)
 {
     return GibberishAES.enc(data, secretKey);
-    
 };
 
 DataProvider.prototype.getRespondData = function(encriptedData, secretKey)
@@ -88,4 +87,14 @@ DataProvider.prototype.getRespondingData = function(challengeKey, secretKey)
     var respondingNumber = 999999999 - challengeNumber;
     
     return getChallengeKey(respondingNumber, secretKey);
+};
+
+DataProvider.prototype.getDataFromMessage = function(message, secretKey)
+{
+    return GibberishAES.enc(message, secretKey);
+};
+
+DataProvider.prototype.getMessageFromData = function(message, secretKey)
+{
+    return GibberishAES.dec(message, secretKey);
 };

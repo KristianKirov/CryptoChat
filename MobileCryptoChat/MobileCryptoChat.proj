@@ -28,7 +28,6 @@
     <Folder Include="App_Resources\Android\drawable-ldpi">
       <Platform>Android</Platform>
     </Folder>
-    <Folder Include="scripts\models" />
     <Folder Include="scripts\security" />
   </ItemGroup>
   <ItemGroup>
@@ -61,10 +60,10 @@
     <Content Include="kendo\styles\images\KendoUI.ttf" />
     <Content Include="kendo\styles\images\KendoUI.woff" />
     <Content Include="kendo\styles\kendo.mobile.all.min.css" />
+    <Content Include="scripts\ChatViewModel.js" />
     <Content Include="scripts\cookie.js" />
     <Content Include="scripts\CryptoChatApp.js" />
     <Content Include="scripts\DataProvider.js" />
-    <Content Include="scripts\models\chatModels.js" />
     <Content Include="scripts\security\gibberish-aes.min.js" />
     <Content Include="scripts\MessagesHeartbeat.js" />
     <Content Include="scripts\Mock.js" />

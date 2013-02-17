@@ -15,11 +15,12 @@
         <script src="scripts/DataProvider.js"></script>
         <script src="scripts/MessagesHeartbeat.js"></script>
         <script src="scripts/security/gibberish-aes.min.js"></script>
+        <script src="scripts/ChatViewModel.js"></script>
 
         <link href="kendo/styles/kendo.mobile.all.min.css" rel="stylesheet" />
         <link href="styles/main.css" rel="stylesheet" />
     </head>
-    <body>
+    <body>        
         <div data-role="view" id="loginView" data-init="cryptoChatApp.onLoginScreenInitialized" data-before-show="cryptoChatApp.onLoginScreenBeforeShow">
             <div data-role="header">
                 <div data-role="navbar">
@@ -36,7 +37,7 @@
                     Remember me <input id="loginRememberMeSwitch" />
                 </li>
             </ul>
-            <a type="button" data-role="button" data-click="cryptoChatApp.onLoginButtonClicked">Login</a>
+            <a type="button" data-role="button" data-click="cryptoChatApp.onLoginButtonClicked" style="width:90%;">Login</a>
         </div>
         
         <div data-role="view" id="registerView" data-title="Register" data-init="cryptoChatApp.onRegisterScreenInitialized" data-before-show="cryptoChatApp.onRegisterScreenBeforeShow">
@@ -65,10 +66,49 @@
             </script>
         </div>
         
-        <div data-role="view" id="openedSessionsView" data-title="Chat Sessions">
-            <h1>TODO: Opened ss</h1>
+        <div data-role="view" id="openedSessionsView" data-model="cryptoChatApp.sessions">
+            <ul id="activeSessionsListView" data-role="listview"
+                data-style="inset" data-template="activeSessionsListView-template"
+                data-bind="source: activeSessions, click: openSession">
+            </ul>
+            <script id="activeSessionsListView-template" type="text/x-kendo-template">
+                <div>
+                    <div data-bind="text: text"></div>
+                    <a data-role="detailbutton" data-style="rowdelete" data-bind="click: removeSession"></a>
+                </div>    
+            </script>
         </div>
         
+        <div data-role="view" id="chatRoom" data-model="cryptoChatApp.sessions.selectedSession" data-hide="cryptoChatApp.onChatRoomHide">
+            <div data-role="header">
+                <div data-role="navbar">
+                    <a data-align="left" data-role="backbutton">Back</a>
+                    <span data-role="view-title" data-bind="text: model.text"></span>
+                    <a data-role="button" href="#registerView" data-align="right"
+                        data-bind="click: model.leaveSession">Leave</a>
+                </div>
+            </div>
+            
+            <div data-bind="source: model.messages"
+                data-template="messagesScroller-template">
+            </div>
+            
+            <script id="messagesScroller-template" type="text/x-kendo-template">
+                <div class="#=getCssClass()#">
+                    #=text#
+                    <div class="msgTime">#=getFormatedTime()#</div>
+                </div>    
+            </script>
+            
+            <footer data-role="footer">
+                <div id="chatFooter">
+                    <input type="text" id="chatMessageField" placeholder="message..."
+                        data-bind="value: model.newMessageText"/>
+                    <a data-role="button" id="sendMessageButton" data-bind="click: model.sendNewMessage">Add</a>
+                </div>
+            </footer>
+        </div>
+
         <div data-role="view" id="pendingSessionsView" data-title="Pending Sessions" data-init="cryptoChatApp.onPendingSessionsScreenInitialized">
             <ul id="pendingSessionsListView" data-type="group"></ul>
             

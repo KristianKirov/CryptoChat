@@ -65,9 +65,25 @@ CryptoChatServiceClient.prototype.responseChatInvitation = function(sessionId, r
 };
 
 CryptoChatServiceClient.prototype.cancelChat = function(sessionId, recipientMSISDN,
-    cancelChatSucceededCallback, cancelChatInvitationFailedCallback)
+    cancelChatSucceededCallback, cancelChatFailedCallback)
 {
     this._performRequest("response-chat-invitation", "POST",
         { sessionID: sessionId, recipientMSISDN: recipientMSISDN},
-        cancelChatSucceededCallback, cancelChatInvitationFailedCallback);
+        cancelChatSucceededCallback, cancelChatFailedCallback);
+};
+
+CryptoChatServiceClient.prototype.startChat = function(sessionId, recipientMSISDN,
+    startChatSucceededCallback, startChatFailedCallback)
+{
+    this._performRequest("start-chat", "POST",
+        { sessionID: sessionId, recipientMSISDN: recipientMSISDN},
+        startChatSucceededCallback, startChatFailedCallback);
+};
+
+CryptoChatServiceClient.prototype.sendChatMessage = function(sessionId, recipientMSISDN, encryptedMsg,
+    sendChatMessageSucceededCallback, sendChatMessageFailedCallback)
+{
+    this._performRequest("send-chat-message", "POST",
+        { sessionID: sessionId, recipientMSISDN: recipientMSISDN, encryptedMsg: encryptedMsg },
+        sendChatMessageSucceededCallback, sendChatMessageFailedCallback);
 };
